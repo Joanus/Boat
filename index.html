@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>潮語之舟：一場奇幻自然的風險旅程</title>
+<style>
+  :root{
+    --bg:#f4fbf6;
+    --ink:#1c2b22;
+    --leaf:#7cc099;
+    --deep:#2f7a7a;
+    --sky:#bfe7ff;
+    --gold:#e7c768;
+    --warn:#e86b6b;
+    --card:#ffffffcc;
+    --accent:#59b1a3;
+    --shadow:0 10px 30px rgba(0,0,0,.08);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family: "Noto Serif TC","PingFang TC",ui-serif,serif;
+    color:var(--ink); background:
+      radial-gradient(1200px 600px at 80% -10%, var(--sky), transparent 60%),
+      radial-gradient(1000px 500px at -10% 120%, #dff7e6, transparent 50%),
+      linear-gradient(#f7fff9, #eefaf3 60%, #e8f5ff);
+    min-height:100dvh; display:flex; align-items:center; justify-content:center;
+  }
+  .app{
+    width:min(1100px, 96vw);
+    background:var(--
+    backdrop-filter: blur(6px);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden; border:1px solid #e1f0e7;
+  }
+  header{
+    padding:16px 20px; display:flex; align-items:center; gap:12px;
+    background:linear-gradient(120deg, #eafcf1, #e7f8ff);
+    border-bottom:1px solid #ddf1e6;
+  }
+  .logo{
+    width:38px; height:38px; border-radius:50%;
+    background: conic-gradient(from 180deg, var(--leaf), var(--sky), var(--accent), var(--leaf));
+    position:relative; box-shadow:0 2px 8px rgba(0,0,0,.06);
+  }
+  .logo::after{
+    content:""; position:absolute; inset:6px; border-radius:50%;
+    background: radial-gradient(60% 60% at 50% 40%, #fff8, #fff0);
+  }
+  h1{margin:0; font-size:20px; letter-spacing:.5px;}
+  main{display:grid; grid-template-columns: 340px 1fr; min-height:70dvh;}
+  aside{
+    padding:18px; border-right:1px solid #e7efe9;
+    background: linear-gradient(180deg, #f7fffb, #f3fbff 60%, #f9fffa);
+  }
+  .panel{background:#fff; border:1px solid #e7efe9; border-radius:14px; padding:14px; margin-bottom:14px; box-shadow: var(--shadow);}
+  .attrs .bar{height:10px; background:#eef7f2; border-radius:99px; overflow:hidden; margin-top:6px;}
+  .attrs .fill{height:100%; background:linear-gradient(90deg, var(--leaf), var(--accent)); width:20%; transition:width .6s cubic-bezier(.2,.8,.2,1);}
+  .tag{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:99px; background:#eef9f3; color:#215a45; font-size:12px; margin:6px 6px 0 0; border:1px dashed #cfeadf}
+  .scene{
+    padding:26px 28px 30px 28px;
+    display:flex; flex-direction:column; min-height:100%;
+    background:
+      radial-gradient(900px 300px at 10% 0%, #eafbf3d0, transparent 60%),
+      radial-gradient(700px 250px at 90% 100%, #e8f6ffd0, transparent 60%);
+  }
+  .scene h2{margin:0 0 8px 0; font-size:22px}
+  .scene p{line-height:1.85; font-size:16px; margin:8px 0 14px}
+  .choices{display:grid; gap:12px; margin-top:auto}
+  .choice{
+    text-align:left; padding:14px 16px; border-radius:14px; border:1px solid #dff1e7; background:#ffffff;
+    box-shadow:0 6px 18px rgba(0,0,0,.05); cursor:pointer; transition:transform .12s ease, box-shadow .2s ease, border-color .2s;
+  }
+  .choice:hover{transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,.08); border-color:#cfe7dc}
+  .choice small{display:block; color:#3c6e57; opacity:.9; margin-top:6px}
+  .footer{
+    display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-top:1px solid #e7efe9; background:#fbfffe
+  }
+  .btn{
+    padding:10px 14px; border-radius:12px; border:1px solid #cfe7dc; background:linear-gradient(#fff,#f7fffb);
+    cursor:pointer; transition:.2s; box-shadow:0 6px 16px rgba(0,0,0,.05);
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .toast{
+    position:fixed; right:16px; bottom:16px; background:#0f5132; color:#e8fff3; padding:10px 14px; border-radius:12px; box-shadow:var(--shadow);
+    opacity:0; transform:translateY(10px); pointer-events:none; transition:.35s;
+  }
+  .toast.show{opacity:1; transform:translateY(0)}
+  .ending{
+    padding:20px; background:linear-gradient(120deg,#f6fff9,#ecfbff);
+  }
+  .ending h3{margin:4px 0 10px 0}
+  .grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;}
+  .pill{display:inline-block; padding:6px 10px; border-radius:999px; background:#eef7f2; border:1px solid #d6eee4; font-size:12px; margin:6px 6px 0 0}
+  .watermark{
+    position:fixed; inset:auto 12px 10px auto; font-size:12px; color:#487a6a; opacity:.6
+  }
+  @media (max-width:900px){
+    main{grid-template-columns:1fr}
+    aside{order:2}
+    .scene{order:1}
+  }
+  /* 小事件閃光 */
+  .sparkle{position:relative}
+  .sparkle::after{
+    content:""; position:absolute; inset:-2px; border-radius:14px; pointer-events:none;
+    background: radial-gradient(120px 40px at 0% 0%, #fff7, transparent 60%);
+    animation: sheen 3.2s linear infinite;
+  }
+  @keyframes sheen{0%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="logo" aria-hidden="true"></div>
+    <div>
+      <h1>潮語之舟｜奇幻自然互動敘事 RPG</h1>
+      <div style="font-size:12px;color:#3c6e57">以「未雨綢繆、應對未知」為核心寓意（不直接提及保險）</div>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <div class="panel">
+        <strong>你的狀態</strong>
+        <div class="attrs">
+          <div style="margin-top:10px">勇氣</div>
+          <div class="bar"><div id="bar-c" class="fill" style="width:20%"></div></div>
+          <div style="margin-top:10px">智慧</div>
+          <div class="bar"><div id="bar-w" class="fill" style="width:20%"></div></div>
+          <div style="margin-top:10px">耐力</div>
+          <div class="bar"><div id="bar-s" class="fill" style="width:20%"></div></div>
+          <div style="margin-top:10px">遠見</div>
+          <div class="bar"><div id="bar-f" class="fill" style="width:20%"></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <strong>隨行護具 / 備品</strong>
+        <div id="items" style="margin-top:8px">
+          <span class="tag">－ 尚未獲得</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <strong>旅程紀錄</strong>
+        <div id="log" style="margin-top:8px; font-size:13px; line-height:1.6; color:#244b3b"></div>
+      </div>
+    </aside>
+
+    <section class="scene">
+      <h2 id="title">序章｜潮汐把少年的名字磨得像一粒光</h2>
+      <p id="text">
+        你名叫「泓」，離岸的夜裡，海霧像攤開的苔衣。暴風之前，漁港的長者遞來一只小木盒，說那是「向未知借來的三口氣」。
+        你帶著雲豹形的靈獸「祀」，牠的眼眸映出星圖與浪花。舢板載滿乾果、繩索與一盞微光燈。
+        聽說前方有座會移動的諸潮群島——它們像草籽一樣漂移，時而孕育清泉，時而藏著裂礁。
+        你可以立刻啟程，追逐流星落下的位置；也能先在港邊檢點、修補、練習翻舟，讓肌肉記住風的語法。
+        「祀」抖落水珠，像在催促，又像在等待你的決斷。
+      </p>
+      <div id="choices" class="choices"></div>
+    </section>
+  </main>
+
+  <div class="footer">
+    <button class="btn" id="backBtn" disabled>⬅ 上一步</button>
+    <div style="font-size:12px;color:#3b6d5a">提示：每次選擇都將影響 <b>勇氣／智慧／耐力／遠見</b> 與可能獲得的護具，最終導向不同結局。</div>
+    <button class="btn" id="restartBtn">重新開始 🔄</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="watermark">奇幻自然風 • 詳細版 • 奇幻冒險 × 溫馨</div>
+</div>
+
+<script>
+/* ========= 資料模型 ========= */
+class State{
+  constructor(){
+    this.courage = 20;  // 勇氣
+    this.wisdom  = 20;  // 智慧
+    this.stamina = 20;  // 耐力
+    this.foresight = 20;// 遠見
+    this.items = new Set(); // 繩結、淡水、星圖
+    this.route = []; // 選擇紀錄
+    this.step = 0;   // 目前場景索引
+    this.history = []; // 場景堆疊
+  }
+}
+
+class Game{
+  constructor(){
+    this.state = new State();
+    this.scenes = this.buildScenes();
+    this.ui = this.bindUI();
+    this.render();
+  }
+
+  bindUI(){
+    return {
+      title: document.getElementById('title'),
+      text: document.getElementById('text'),
+      choices: document.getElementById('choices'),
+      bars:{
+        c: document.getElementById('bar-c'),
+        w: document.getElementById('bar-w'),
+        s: document.getElementById('bar-s'),
+        f: document.getElementById('bar-f'),
+      },
+      items: document.getElementById('items'),
+      log: document.getElementById('log'),
+      toast: document.getElementById('toast'),
+      backBtn: document.getElementById('backBtn'),
+      restartBtn: document.getElementById('restartBtn')
+    };
+  }
+
+  /* ---- 場景定義（4個決策點） ---- */
+  buildScenes(){
+    const T = (title, text, choices)=>({title, text, choices});
+
+    const s0 = T(
+      "序章｜潮汐把少年的名字磨得像一粒光",
+      // ~450字內
+      "你名叫「泓」。暴風季前夜，港內潮聲像一群遠行的鳥，將棲木從你心上拔走。長者把一只小木盒放進你掌心，說那是「向未知借來的三口氣」，只在適時打開才會化作援手。你的同伴是一隻雲豹形靈獸「祀」，牠的鬍鬚能感風，瞳仁映著碎星。有人指向海圖上一個會移動的群島，它們會在潮線間漂泊，時而帶來淡水，時而露出齒狀礁盤。你把舢板拖至浪線，檢點乾果、繩索、補釘與微光燈。是立刻追逐今晚落海的流星，還是再做幾道預備工：練翻舟、打繩結、測微光燈的續明？祀貼著你的腿，催促中又含著等待。",
+      [
+        {label:"立刻啟程，趁潮頭抬起時追上流星尾跡", sub:"＋勇氣，－遠見，略過檢點", delta:{c: +8, f: -4}, next:1},
+        {label:"延後出航，做三件預備：翻舟演練／繩結／測燈", sub:"＋智慧、＋遠見，可能觸發護具", delta:{w:+8, f:+10}, item:"繩結", next:1},
+        {label:"只做最少檢點，帶上多一袋乾果", sub:"＋耐力，－智慧", delta:{s:+8, w:-4}, next:1}
+      ]
+    );
+
+    const s1 = T(
+      "第一潮｜浪脊上的演算法",
+      "汪洋到正午時像一塊呼吸的綠玻璃。遠處的群島緩緩移動，像被看不見的牧人趕著。忽然，陰線從雲底墜下，天光在海面上開合。你感覺到一股旋轉的流，祀則低鳴，尾巴拍著船沿。前方有三條可行的路：一條貼著暗礁，潮汐會把你推快，但一旦擦傷，甲板的補釘可能撐不住；一條繞向背風水道，迂迴卻穩定；還有一條通往一座會吐霧的島，島上或許有清泉，也可能是海市的騙術。你摸了摸小木盒，它在掌心裡像一顆未醒的心跳。你必須在起風之前決定。",
+      [
+        {label:"貼暗礁走捷徑，讓速度成為盾", sub:"＋勇氣、＋耐力，風險增", delta:{c:+6,s:+6, f:-3}, next:2},
+        {label:"繞背風水道，細讀浪紋與雲腳", sub:"＋智慧、＋遠見，較慢", delta:{w:+7,f:+7}, item:"星圖", next:2},
+        {label:"靠霧島補水，驗證真假", sub:"判識成功得淡水；失誤耗體力", skillCheck:"wisdom", success:{delta:{w:+2,f:+4}, item:"淡水"}, fail:{delta:{s:-6}}, next:2}
+      ]
+    );
+
+    const s2 = T(
+      "第二潮｜與祀共處的章法",
+      "夜裡，黑潮像一條長蛇蜿蜒而過，星光被牠吞了一縷。祀忽然踱到船頭，盯著你的乾果袋，似乎飢渴。牠在海上的敏銳感官是你倚賴的舵，但若食物分配失衡，牠會在暴風中失去判斷。你想起港內的老人說過：任何同行都需要規則，規則是一種看不見的護具。此刻你可以全然信任祀、把食糧交更多給牠以換取牠的專注；也能嚴格配給，確保長程；或是在夜裡教牠辨認微光燈的節律，讓你們的節奏一致。海風把這三種可能吹成三朵不同的浪花，等待你伸手去觸碰。",
+      [
+        {label:"優先餵飽祀，換取牠在風暴中的敏銳", sub:"＋和諧，＋勇氣，－耐力", delta:{c:+5,s:-5}, flag:"bondHigh", next:3},
+        {label:"嚴格配給，記錄每一粒乾果的去向", sub:"＋遠見、＋智慧，關係降", delta:{w:+4, f:+6}, flag:"bondLow", next:3},
+        {label:"夜間訓練：以微光燈節律做協作默契", sub:"＋智慧、＋耐力，提升穩定", delta:{w:+5, s:+5}, next:3}
+      ]
+    );
+
+    const s3 = T(
+      "第三潮｜暴風的門扉",
+      "風暴像一座升起的玻璃城，牆面是斜斜的雨。浪峰高過月亮，舢板在穹頂與海谷間被拋擲。你聽見木盒在甲板裡叮噹作響，祀則站得很低，耳朵貼著風。這一刻，三口氣或許要用上一口：是打開木盒，讓其中的護助引來偶遇的巨龜拖你離峰？還是把繩結繫成浮索，綁好你與祀，讓任何落水都還能回到同一條線？或乾脆趁風眼出現時強行衝線，賭一個黎明。每一條路都能通向岸，也都可能通向另一個深處。你的掌心發熱，浪花在皮膚上爆開小小的鹽花。",
+      [
+        {label:"開盒用第一口氣：呼喚海龜指引脫離浪牆", sub:"＋遠見、＋智慧，消耗一次護助", delta:{w:+4,f:+8}, useBox:true, next:"END"},
+        {label:"以繩結繫成浮索，確保彼此不脫離", sub:"需要擁有「繩結」可強化效果", reqItem:"繩結", delta:{s:+8, f:+4}, next:"END"},
+        {label:"抓準風眼強衝，像箭一樣穿過雨幕", sub:"＋勇氣，風險大", delta:{c:+8, f:-4, s:-3}, next:"END"}
+      ]
+    );
+
+    return [s0,s1,s2,s3];
+  }
+
+  /* ---- 遊戲主循環 ---- */
+  render(){
+    const s = this.currentScene();
+    if(!s){ return; }
+    this.ui.title.textContent = s.title;
+    this.ui.text.textContent = s.text;
+    this.ui.choices.innerHTML = "";
+    s.choices.forEach((ch,i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choice sparkle';
+      btn.innerHTML = `<div>${ch.label}</div><small>${ch.sub||""}</small>`;
+      btn.addEventListener('click', ()=>this.choose(ch));
+      this.ui.choices.appendChild(btn);
+    });
+    // 狀態列
+    this.updateBars();
+    this.renderItems();
+    // 導航
+    this.ui.backBtn.disabled = (this.state.history.length===0);
+  }
+
+  currentScene(){
+    const idx = this.state.step;
+    if(idx==="END"){ this.endings(); return null; }
+    return this.scenes[idx];
+  }
+
+  choose(choice){
+    // 記錄歷史
+    this.state.history.push(this.state.step);
+    // 數值變動
+    if(choice.delta){ this.applyDelta(choice.delta); }
+    if(choice.item){ this.state.items.add(choice.item); this.toast(`獲得護具：「${choice.item}」`); }
+    if(choice.flag){ this.state[choice.flag] = true; }
+    if(choice.skillCheck){
+      const ok = this.skillTest(choice.skillCheck);
+      const outcome = ok ? choice.success : choice.fail;
+      if(outcome?.delta) this.applyDelta(outcome.delta);
+      if(ok && outcome?.item){ this.state.items.add(outcome.item); this.toast(`取得清泉：「${outcome.item}」`); }
+      this.log(`進行判識：${choice.label} → ${ok?"成功":"失誤"}`);
+    }else{
+      this.log(`你選擇：${choice.label}`);
+    }
+    if(choice.useBox){ this.state.usedBox = true; }
+    // 前進
+    this.state.step = choice.next;
+    this.render();
+  }
+
+  applyDelta(d){
+    const clamp=(x)=>Math.max(0, Math.min(100, x));
+    this.state.courage = clamp(this.state.courage + (d.c||0));
+    this.state.wisdom  = clamp(this.state.wisdom  + (d.w||0));
+    this.state.stamina = clamp(this.state.stamina + (d.s||0));
+    this.state.foresight = clamp(this.state.foresight + (d.f||0));
+    this.updateBars(true);
+  }
+
+  updateBars(anim=false){
+    const set=(el,val)=>{ el.style.width = Math.max(6,val) + "%"; };
+    set(this.ui.bars.c, this.state.courage);
+    set(this.ui.bars.w, this.state.wisdom);
+    set(this.ui.bars.s, this.state.stamina);
+    set(this.ui.bars.f, this.state.foresight);
+  }
+
+  renderItems(){
+    const wrap = this.ui.items;
+    wrap.innerHTML="";
+    if(this.state.items.size===0){
+      wrap.innerHTML = `<span class="tag">－ 尚未獲得</span>`;
+      return;
+    }
+    this.state.items.forEach(it=>{
+      const span = document.createElement('span');
+      span.className="tag";
+      span.textContent = it;
+      wrap.appendChild(span);
+    });
+  }
+
+  skillTest(type){
+    const r = Math.random(); // 0~1
+    let base=0.5;
+    if(type==="wisdom") base = Math.min(0.85, 0.35 + this.state.wisdom/120);
+    return r < base;
+  }
+
+  log(msg){
+    const time = ["🌊","🍃","🌤️","🌙","⭐","🪶"][Math.floor(Math.random()*6)];
+    const line = document.createElement('div');
+    line.textContent = `${time} ${msg}`;
+    this.ui.log.prepend(line);
+  }
+
+  toast(text){
+    const t = this.ui.toast;
+    t.textContent = text;
+    t.classList.add('show');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+
+  /* ---- 結局計算（≥5種） ---- */
+  endings(){
+    // 條件
+    const {courage:c, wisdom:w, stamina:s, foresight:f, items, usedBox, bondHigh, bondLow} = this.state;
+
+    // 結局池
+    const pool = [];
+
+    // 1 理想結局：平衡且具備至少兩樣護具
+    if(c>=40 && w>=40 && s>=40 && f>=40 && items.size>=2){
+      pool.push({
+        key:"ideal",
+        title:"和風歸岸 🌈",
+        text:"風暴退去，雲縫像一條被縫好的河。你與祀沿著海龜留下的光紋抵達一座漂移慢下來的島。島上有陣風會把鹽份吹進石洞，乾冷的洞壁像一個可以久存物資的胸腔。你把繩結、淡水與星圖整理成三個口袋，像是給未來的自己留下一份看不見的披風。你忽然明白：真正的勇敢不是只靠烈焰衝鋒，而是把烈焰收在盔甲底下，讓它在需要的時候恰好亮起。祀低低地嗚鳴，把額頭貼向你。你們沿岸搭建庇蔭，等潮線再移時，這座島會帶你回到有人煙的水道。你在沙上畫了一行字：預備，是抵達的另一種名字。",
+        gain:"獲得稱號：潮線規劃者",
+        insight:"啟示：把風險想成風，把準備想成帆。",
+        emoji:"🌈"
+      });
+    }
+
+    // 2 專業結局：任務成功但關係疏離（高遠見、智慧；bondLow）
+    if((f+w)>=110 && bondLow){
+      pool.push({
+        key:"pro",
+        title:"獨掌羅盤 📐",
+        text:"你用細緻的配給與紀錄度過了最難的夜。每一口水、每一節風都被你拆解成刻度。你順利繞過暗礁群，進入商船常走的水道。當遠處傳來鐘聲，祀卻悄悄躲在船尾，眼神不再與你對齊。你抵達了燈塔，卻發現岸上的掌聲像隔著玻璃。你明白：計劃可以把船送到岸，但要讓心也登陸，還需要他者的呼吸。你把羅盤掛在胸前，告訴自己：下次的路，讓規則與關係一起寫。",
+        gain:"獲得技能：度量者的筆記",
+        insight:"啟示：把風險想清楚，也要把同伴放進去。",
+        emoji:"📐"
+      });
+    }
+
+    // 3 和諧結局：關係圓滿但犧牲目標（高 bondHigh，低遠見或物資不足）
+    if(bondHigh && (f<40 || s<35 || items.size===0)){
+      pool.push({
+        key:"harmony",
+        title:"同岸之息 🫶",
+        text:"你分給祀更多食糧，牠在風暴裡以獸性的準確守住你的船。潮線變換時，你們選擇靠上一座未在星圖的島。那裡有果樹、清淺的潮池與溫暖的背風灣，但距離航路很遠。你們學會在潮起潮落間換位、在季風轉身前收拾葉片做的屋。雖然未抵既定的岸，但你們把彼此安放得很好。你在沙上刻下規則，像把一件輕披風披在未來的肩上。偶有遠船路過，你已不急於揮手，因為心先抵岸了。",
+        gain:"獲得稱號：潮池守望",
+        insight:"啟示：守住彼此，也是一種到達。",
+        emoji:"🫶"
+      });
+    }
+
+    // 4 壞結局：魯莽衝線，屬性失衡或體力不足
+    if((c>50 && f<30) || s<25){
+      pool.push({
+        key:"bad",
+        title:"沉默之海 🌫️",
+        text:"你抓準風眼強衝，箭矢般的勇決劃開了雨幕，也劃破了船側僅存的補釘。海水以一種近乎溫柔的方式湧入，像在提醒你：所有勝利都要留出回頭的門。祀跳入水中推著船尾，你們漂上了一片無名的靜海。遠方的島嶼像貼在天上的影子，不再靠近。你把小木盒緊握，卻已錯過最合適的時刻。你學到：不做準備的衝刺，只是比較快的原地打轉。",
+        gain:"失去：部分物資",
+        insight:"啟示：把「如果」提早裝進包裹裡。",
+        emoji:"🌫️"
+      });
+    }
+
+    // 5 隱藏結局：集齊三護具（繩結／淡水／星圖）或使用「一口氣」恰到好處＋屬性均衡
+    const all3 = (["繩結","淡水","星圖"].every(x=>items.has(x)));
+    if((all3 && (w+f)>=90 && s>=35) || (this.state.usedBox && f>=50 && w>=45)){
+      pool.push({
+        key:"secret",
+        title:"築巢之島 🐚",
+        text:"你在暴風最厚時才打開小木盒——不是為了任性地逆天，而是為了在準備之後，把未知納為盟友。海龜應聲而至，牠背甲上的苔蘚像一張年輪的地圖。你以繩結把船與牠連在一條呼吸線上，沿星圖抵達一座中空的石灰岩島。島心有甜水，洞頂住著會在潮汐時鳴叫的鳥。你把淡水存成小罐，將規則刻在石壁，留給未來可能經過的人。你終於理解：看不見的護具，會在看得見的日常裡發生作用。",
+        gain:"獲得稱號：風險馴者",
+        insight:"啟示：未雨綢繆，使偶然也能成為朋友。",
+        emoji:"🐚"
+      });
+    }
+
+    // 防呆：若沒有觸發任何，給一個中性收束
+    if(pool.length===0){
+      pool.push({
+        key:"neutral",
+        title:"潮線未定 🪶",
+        text:"風過後，你與祀停在兩座島之間的水道。你學會了記風、繫索，也學會了把遲疑當作訊號。前方仍有岸，但此刻你選擇在背風處修整，將今日的教訓折成三片葉，壓進航記本。明天出發時，你會先問自己：我準備了哪些護具？哪些空隙還需要被照顧？你微笑，因為你知道——這就是變好的開始。",
+        gain:"獲得技能：潮記者",
+        insight:"啟示：把準備做在前面，把遺憾留在後面。",
+        emoji:"🪶"
+      });
+    }
+
+    // 挑選最貼合的（取權重最高者；簡化：取第一個）
+    const end = pool[0];
+    this.renderEnding(end);
+  }
+
+  renderEnding(end){
+    const wrap = document.querySelector('.scene');
+    const summary = `
+      <div class="ending">
+        <h3>${end.title}</h3>
+        <p>${end.text}</p>
+        <div class="grid">
+          <div class="panel">
+            <strong>結算</strong>
+            <div class="pill">勇氣：${this.state.courage}</div>
+            <div class="pill">智慧：${this.state.wisdom}</div>
+            <div class="pill">耐力：${this.state.stamina}</div>
+            <div class="pill">遠見：${this.state.foresight}</div>
+            <div style="margin-top:8px"><strong>護具：</strong> ${ (this.state.items.size? [...this.state.items].join("、") : "（無）") }</div>
+            <div style="margin-top:8px"><strong>路徑摘要：</strong> ${this.ui.log.textContent? "見右側旅程紀錄" : "你行止如風，無字可記"} </div>
+          </div>
+          <div class="panel">
+            <strong>${end.gain||"旅程收穫"}</strong>
+            <p style="margin:.5em 0 0 0">精要：${end.insight}</p>
+            <p style="opacity:.8">結語：本故事以「預備」象徵看不見的護具，讓玩家在不直接提及某些現實詞彙的情況下，感受「風險保障」的價值。</p>
+          </div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn" onclick="location.reload()">再走一段 ${end.emoji}</button>
+          <button class="btn" onclick="game.share()">複製旅程摘要 📋</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('title').textContent = "終章｜潮語歸檔";
+    document.getElementById('text').innerHTML = summary;
+    this.ui.choices.innerHTML = "";
+    this.ui.backBtn.disabled = true;
+  }
+
+  share(){
+    const summary = [
+      "《潮語之舟》旅程摘要",
+      `勇氣:${this.state.courage} 智慧:${this.state.wisdom} 耐力:${this.state.stamina} 遠見:${this.state.foresight}`,
+      `護具:${this.state.items.size? [...this.state.items].join("、"):"無"}`,
+      `旅程紀錄：\n${[...this.ui.log.childNodes].map(n=>"- "+n.textContent).reverse().join("\n")}`
+    ].join("\n");
+    navigator.clipboard.writeText(summary).then(()=>{
+      this.toast("已複製旅程摘要到剪貼簿");
+    }).catch(()=>{
+      this.toast("複製失敗，請手動選取文字");
+    })
+  }
+}
+
+/* ========= 事件繫結 ========= */
+const game = new Game();
+
+document.getElementById('backBtn').addEventListener('click', ()=>{
+  if(game.state.history.length===0) return;
+  game.state.step = game.state.history.pop();
+  game.toast("已回到上一步");
+  game.render();
+});
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  const confirmReset = confirm("確定要重新開始？當前旅程紀錄將清除。");
+  if(!confirmReset) return;
+  window.location.reload();
+});
+</script>
+</body>
+</html>
