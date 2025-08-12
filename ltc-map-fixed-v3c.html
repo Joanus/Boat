@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>長照險互動地圖：多章節＋順序闖關＋證書（v3c，完成先出證書）</title>
+<style>
+  :root{
+    --paper:#f7f1e1; --ink:#2b2b2b; --gold:#b6863b; --ok:#2e7d32; --no:#b71c1c;
+    --shadow:0 10px 30px rgba(30,20,0,.25);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:var(--ink)}
+  header,footer{max-width:1280px;margin:0 auto;padding:12px 16px}
+  h1{margin:.2em 0 0;font-size:clamp(22px,3vw,32px)}
+  .pill{display:inline-block;margin-right:8px;padding:6px 10px;border:1px dashed var(--gold);border-radius:999px;background:linear-gradient(#fff7e5,#efdfbf);font-size:12px}
+  .btn{appearance:none;border:none;border-radius:10px;padding:10px 14px;background:linear-gradient(#fff,#f3e3c6);box-shadow:var(--shadow);font-weight:600;cursor:pointer}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 16px 20px}
+  .chapbar{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 10px}
+  .chap{padding:8px 12px;border-radius:999px;border:1px solid #d8c49c;background:#fff;cursor:pointer}
+  .chap.active{background:linear-gradient(#fff7e5,#efdfbf);border-color:#b6863b} .chap.done::after{content:"✓";margin-left:6px;color:#2e7d32}
+  .board{position:relative;aspect-ratio:16/9;width:100%;border-radius:20px;overflow:hidden;border:2px solid #e1cfa6;background:#f5ebcf;box-shadow:var(--shadow);isolation:isolate}
+  .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;filter:contrast(1.02) saturate(1.03)}
+  .spot{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;width:min(9vw,74px);height:min(9vw,74px);min-width:52px;min-height:52px;border-radius:50%;
+        background:radial-gradient(circle at 30% 30%,#fff,#f0dcb6 70%);border:2px solid #b6863b;box-shadow:0 12px 24px rgba(0,0,0,.22);cursor:pointer;z-index:3}
+  .spot.locked{filter:grayscale(1) opacity(.65);cursor:not-allowed}
+  .spot.completed{background:radial-gradient(circle at 30% 30%,#ecffe8,#c7f0c4 70%);border-color:#6aa26b}
+  .spot .label{position:absolute;top:100%;left:50%;transform:translate(-50%,10px);background:rgba(255,255,255,.9);padding:4px 8px;border-radius:8px;border:1px dashed #b6863b;font-size:12px;white-space:nowrap}
+  .mascot{position:absolute;left:10%;top:80%;transform:translate(-50%,-50%);z-index:4;width:min(12vw,120px);transition:left .9s ease, top .9s ease}
+  .inventory{margin:12px 0 0;padding:12px;border:1px dashed #b6863b;border-radius:12px;background:linear-gradient(#fffdf8,#efe5cb);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .token{padding:6px 10px;border-radius:10px;background:#fff;border:1px solid #d7c39a;min-width:48px;text-align:center;font-size:14px;opacity:.45}
+  .token.unlock{opacity:1}
+  dialog{border:none;border-radius:16px;padding:0;max-width:min(640px,92vw);box-shadow:var(--shadow)}
+  .modal{padding:18px;background:linear-gradient(#fff,#f5ecd9);border:1px solid #e6d7b7;border-radius:16px}
+  .q-title{margin:0 0 8px;font-size:18px;font-weight:700}
+  .choices{display:grid;gap:8px;margin:12px 0}
+  .choice{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid #e3d3af;border-radius:12px;background:#fff}
+  .feedback{display:none;margin-top:10px;padding:10px;border-radius:10px}
+  .feedback.ok{display:block;background:#ecf7ec;border:1px solid #b6e0ba;color:#1b5e20}
+  .feedback.no{display:block;background:#fdeaea;border:1px solid #f2b5b5;color:#7f1d1d}
+  footer{color:#6b5a3a;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <span class="pill">🗺️ 多章節（v3c）</span>
+  <h1>長照險互動地圖</h1>
+</header>
+
+<div class="wrap">
+  <div class="chapbar">
+    <button id="chap0" class="chap active">第 1 章｜海岸群島</button>
+    <button id="chap1" class="chap">第 2 章｜巖峰秘境</button>
+    <span style="margin-left:auto"></span>
+    <span class="pill" id="progressPill">進度：0 / 10</span>
+    <button class="btn" id="resetBtn">重玩 / 清進度</button>
+  </div>
+
+  <div id="board" class="board" role="application" aria-label="互動地圖">
+    <img id="bg" class="bg" alt="地圖背景" />
+    <!-- 保留 v3 的 SVG 吉祥物 -->
+    <svg id="mascot" class="mascot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-label="吉祥物">
+      <defs>
+        <filter id="drop"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".35"/></filter>
+      </defs>
+      <circle cx="60" cy="60" r="40" fill="#8fd18a" filter="url(#drop)"/>
+      <circle cx="48" cy="52" r="6" fill="#243b2e"/><circle cx="72" cy="52" r="6" fill="#243b2e"/>
+      <path d="M40 78 Q60 92 80 78" stroke="#243b2e" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <circle cx="34" cy="46" r="6" fill="#8fd18a"/><circle cx="86" cy="46" r="6" fill="#8fd18a"/>
+    </svg>
+  </div>
+
+  <div class="inventory" aria-live="polite">
+    <strong>🎒 寶物袋：</strong>
+    <div class="token" id="token1">🐚 守護貝殼</div>
+    <div class="token" id="token2">💎 智慧寶石</div>
+    <div class="token" id="token3">🌿 藤蔓之心</div>
+    <div class="token" id="token4">⏳ 時之石</div>
+    <div class="token" id="token5">⚓ 安心錨</div>
+    <div class="token" id="token6">🪵 樹精護符</div>
+    <div class="token" id="token7">🪨 巖峰徽章</div>
+    <div class="token" id="token8">🔥 餘燼火種</div>
+    <div class="token" id="token9">💧 清泉之滴</div>
+    <div class="token" id="token10">🌟 星光令牌</div>
+    <span style="flex:1"></span><span class="pill" id="statusMsg">依順序闖關；已通過可回看正解</span>
+  </div>
+</div>
+
+<!-- 題目視窗 -->
+<dialog id="qDialog" aria-labelledby="qTitle">
+  <form method="dialog" class="modal" id="qForm">
+    <h2 class="q-title" id="qTitle">挑戰</h2>
+    <p id="qText">……</p>
+    <div class="choices" id="qChoices"></div>
+    <div class="feedback" id="qFeedback"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn" type="button" value="cancel" onclick="document.getElementById('qDialog').close()">先等等</button>
+      <button class="btn" id="confirmBtn" type="submit" value="ok">確認答案</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 通關＋證書 -->
+<dialog id="finishDialog" aria-labelledby="finishTitle">
+  <div class="modal">
+    <h2 class="q-title" id="finishTitle">🎉 全章節通關！</h2>
+    <p>輸入你的名稱，下載花邊電子證書（PNG）。</p>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label for="certName">名稱：</label>
+      <input id="certName" type="text" placeholder="輸入名字" style="padding:8px 10px;border:1px solid #ccb78e;border-radius:8px"/>
+      <button class="btn" id="makeCertBtn" type="button">生成電子證書</button>
+    </div>
+    <div style="margin-top:10px;text-align:right"><button class="btn" id="finishCloseBtn" type="button">太棒了！</button></div>
+  </div>
+</dialog>
+
+<footer>ⓘ 教育用途示範：題目為一般性保險與長照知識，實際保障以各商品條款為準。</footer>
+
+<script>
+(function(){
+  // ---- 章節資料 ----
+  const CHAPTERS = [
+    { key:'coast', name:'第 1 章｜海岸群島',
+      bg:'https://media.istockphoto.com/id/841151358/vector/old-map-of-the-north-sea-britain-and-scandinavia-vector-illustration.jpg?s=2048x2048&w=is&k=20&c=lSjP2_vG54PZgb7gDmS5hUkRCIl8yFp_6IBVUWjQhds=',
+      trailSpots:[
+        {id:1,left:'10%',top:'75%',label:'棕櫚海灘',reward:'token1', q:{t:'長照險主要在保障什麼情況？',c:{A:'感冒發燒',B:'失能或認知障礙導致需長期照護',C:'門牙斷裂美容修復'},a:'B'}},
+        {id:2,left:'28%',top:'63%',label:'智慧燈塔',reward:'token2', q:{t:'長照險常見給付型態是？',c:{A:'一次金 + 月付/年金給付',B:'交通補助 + 藥費補助',C:'旅平險理賠'},a:'A'}},
+        {id:3,left:'46%',top:'56%',label:'健康叢林',reward:'token3', q:{t:'「等待期」的意義是？',c:{A:'投保當天即生效',B:'投保後需過一定期間才生效',C:'只有意外才有等待期'},a:'B'}},
+        {id:4,left:'64%',top:'46%',label:'時光山洞',reward:'token4', q:{t:'年齡與長照險保費關係？',c:{A:'年齡越小通常越低',B:'年齡越小通常越高',C:'無關'},a:'A'}},
+        {id:5,left:'84%',top:'34%',label:'安心港灣',reward:'token5', q:{t:'達到失能/長照門檻後，必須住機構才可請領？',c:{A:'是，必須入住',B:'否，多數商品與照護地點無關（以條款為準）',C:'只有住院才可請領'},a:'B'}}
+      ]
+    },
+    { key:'mount', name:'第 2 章｜巖峰秘境',
+      bg:'https://media.istockphoto.com/id/501279187/vector/treasure-map.jpg?s=2048x2048&w=is&k=20&c=MU0IpBmOxDgqZg4SWNyugWCcBhlx5B-8obDBdR12igk=',
+      trailSpots:[
+        {id:6,left:'16%',top:'74%',label:'山腳營地',reward:'token6', q:{t:'日常長照成本常包含？',c:{A:'僅房租',B:'生活照護、復健、看護/機構費等',C:'只有手術費'},a:'B'}},
+        {id:7,left:'36%',top:'63%',label:'巖洞前哨',reward:'token7', q:{t:'評估長照需求常見指標？',c:{A:'ADL/失能等級',B:'身高體重',C:'鞋碼'},a:'A'}},
+        {id:8,left:'56%',top:'53%',label:'餘燼祭壇',reward:'token8', q:{t:'理賠觸發常包含？',c:{A:'達特定失能等級或認知障礙（如失智）',B:'心情不好',C:'購買保健食品'},a:'A'}},
+        {id:9,left:'76%',top:'42%',label:'高嶺清泉',reward:'token9', q:{t:'居家照護與機構照護主要差異？',c:{A:'照護地點與人力安排',B:'是否能看電視',C:'是否喝手搖飲'},a:'A'}},
+        {id:10,left:'90%',top:'30%',label:'巔峰星台',reward:'token10', q:{t:'規劃長照風險較佳做法？',c:{A:'只靠現金儲蓄',B:'評估風險缺口，以保險＋儲蓄/投資分散',C:'完全不需要規劃'},a:'B'}}
+      ]
+    }
+  ];
+
+  // ---- 狀態 ----
+  let state={completed:{}, chap:0, pointerId:1};
+
+  // ---- DOM ----
+  const board=document.getElementById('board');
+  const bg=document.getElementById('bg');
+  const progressPill=document.getElementById('progressPill');
+  const chapBtns=[document.getElementById('chap0'), document.getElementById('chap1')];
+  const mascot=document.getElementById('mascot');
+  const qDialog=document.getElementById('qDialog');
+  const qForm=document.getElementById('qForm');
+  const qTitle=document.getElementById('qTitle');
+  const qText=document.getElementById('qText');
+  const qChoices=document.getElementById('qChoices');
+  const qFeedback=document.getElementById('qFeedback');
+  const finishDialog=document.getElementById('finishDialog');
+
+  const overallDone=()=> CHAPTERS.flatMap(c=>c.trailSpots).every(s=>state.completed[s.id]);
+
+  // 章節切換
+  chapBtns.forEach((btn,idx)=>{
+    btn.onclick=()=>{
+      state.chap=idx; renderBoard(); renderChaps();
+      moveMascotTo(CHAPTERS[idx].trailSpots.find(s=>state.completed[s.id]) || CHAPTERS[idx].trailSpots[0]);
+    };
+  });
+
+  document.getElementById('resetBtn').onclick=()=>{
+    state={completed:{},chap:0,pointerId:1};
+    renderChaps(); renderBoard(); moveMascotTo(CHAPTERS[0].trailSpots[0]);
+  };
+
+  function renderChaps(){
+    chapBtns.forEach((b,i)=>{
+      const done = CHAPTERS[i].trailSpots.every(s=>state.completed[s.id]);
+      b.classList.toggle('active', i===state.chap);
+      b.classList.toggle('done', done);
+    });
+  }
+
+  function renderBoard(){
+    const ch=CHAPTERS[state.chap];
+    bg.src = ch.bg;
+    Array.from(board.querySelectorAll('.spot')).forEach(n=>n.remove());
+    ch.trailSpots.forEach(s=>{
+      const el=document.createElement('button');
+      el.className='spot'; el.style.left=s.left; el.style.top=s.top; el.dataset.id=s.id;
+      el.innerHTML='<span class="label">'+s.label+'（'+s.id+'）</span>';
+      const playable=(s.id===state.pointerId);
+      const passed=!!state.completed[s.id];
+      if(!playable && !passed) el.classList.add('locked');
+      if(passed) el.classList.add('completed');
+      el.onclick=()=> onSpotClick(s, playable, passed);
+      board.appendChild(el);
+    });
+    renderProgress();
+  }
+
+  function renderProgress(){
+    const total = CHAPTERS.reduce((n,ch)=>n+ch.trailSpots.length,0);
+    const done = Object.keys(state.completed).length;
+    progressPill.textContent='進度：'+done+' / '+total;
+    if(done===total && !finishDialog.open) finishDialog.showModal();
+  }
+
+  function moveMascotTo(spot, cb){
+    if(!spot) return;
+    mascot.style.left=spot.left; mascot.style.top=spot.top;
+    setTimeout(()=> cb && cb(), 900);
+  }
+
+  // 問題互動
+  let mode='play', currentSpot=null;
+
+  function onSpotClick(s, playable, passed){
+    if(passed && !playable){ mode='review'; openQuestion(s); return; }
+    if(!playable) return; mode='play'; openQuestion(s);
+  }
+
+  function openQuestion(s){
+    currentSpot=s;
+    qTitle.textContent='【'+s.id+'】'+s.label + (mode==='review'?'（已通關｜僅瀏覽）':''); 
+    qText.textContent=s.q.t;
+    qChoices.innerHTML='';
+    for(const [k,label] of Object.entries(s.q.c)){
+      const row=document.createElement('label');
+      row.className='choice';
+      row.innerHTML='<input type="radio" name="opt" value="'+k+'" '+(mode==='review'?'disabled':'')+' />'
+                   +'<div><strong>'+k+'.</strong> '+label+'</div>';
+      qChoices.appendChild(row);
+    }
+    qFeedback.style.display='none';
+    if(mode==='review'){ qFeedback.className='feedback ok'; qFeedback.textContent='正確答案：'+s.q.a; qFeedback.style.display='block'; }
+    qDialog.showModal();
+  }
+
+  qForm.addEventListener('submit', (e)=>{
+    if(mode==='review') return;
+    const fd=new FormData(qForm); const pick=fd.get('opt');
+    if(!pick){ e.preventDefault(); qFeedback.className='feedback no'; qFeedback.textContent='請先選擇一個選項唷。'; qFeedback.style.display='block'; return; }
+    if(e.submitter && e.submitter.value==='ok'){ e.preventDefault();
+      const ok=(pick===currentSpot.q.a); qFeedback.style.display='block';
+      if(ok){
+        qFeedback.className='feedback ok'; qFeedback.textContent='答對了！';
+        state.completed[currentSpot.id]=true;
+        const token=document.getElementById(currentSpot.reward); if(token) token.classList.add('unlock');
+
+        // ★ 關鍵修正：若全數完成，直接跳證書，不再自動開下一題
+        if(overallDone()){
+          renderChaps(); renderBoard();
+          setTimeout(()=>{ qDialog.close(); finishDialog.showModal(); }, 400);
+          return;
+        }
+
+        // 否則正常前進
+        const allIds=CHAPTERS.flatMap(c=>c.trailSpots.map(x=>x.id));
+        const curIndex=allIds.indexOf(currentSpot.id);
+        state.pointerId = allIds[curIndex+1] || state.pointerId;
+
+        const ch=CHAPTERS[state.chap]; const idx=ch.trailSpots.findIndex(x=>x.id===currentSpot.id);
+        let next=ch.trailSpots[idx+1];
+        if(!next){
+          if(state.chap < CHAPTERS.length-1){ state.chap++; }
+          next = CHAPTERS[state.chap].trailSpots[0];
+        }
+        renderChaps(); renderBoard();
+        setTimeout(()=>{ qDialog.close(); moveMascotTo(next, ()=> openQuestion(next)); }, 600);
+      }else{
+        qFeedback.className='feedback no'; qFeedback.textContent='答錯了，再想想！';
+      }
+    }
+  });
+
+  // 證書：生成或關閉後都回到第 1 章第 1 題並自動開題
+  document.getElementById('finishCloseBtn').addEventListener('click', ()=>{
+    finishDialog.close();
+    state={completed:{}, chap:0, pointerId:1};
+    renderChaps(); renderBoard();
+    setTimeout(()=> onSpotClick(CHAPTERS[0].trailSpots[0], true, false), 300);
+  });
+
+  document.getElementById('makeCertBtn').addEventListener('click', ()=>{
+    const name=(document.getElementById('certName').value||'優秀探險家').trim();
+    const W=1400,H=900; const c=document.createElement('canvas'); c.width=W; c.height=H; const ctx=c.getContext('2d');
+    const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#fff7e0'); bg.addColorStop(1,'#edd3a0'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    // 花邊
+    ctx.strokeStyle='#8a5a24'; ctx.lineWidth=6; ctx.strokeRect(40,40,W-80,H-80);
+    ctx.setLineDash([10,8]); ctx.lineWidth=2; ctx.strokeRect(70,70,W-140,H-140); ctx.setLineDash([]);
+    // 文字
+    ctx.textAlign='center'; ctx.fillStyle='#4a3b22';
+    ctx.font='56px "Noto Sans TC",system-ui'; ctx.fillText('長照險知識探險｜榮譽證書', W/2, 160);
+    ctx.font='64px "Noto Sans TC",system-ui'; ctx.fillStyle='#1f1b16'; ctx.fillText(name, W/2, 260);
+    ctx.font='28px "Noto Sans TC",system-ui'; ctx.fillStyle='#2b2418';
+    const total=CHAPTERS.reduce((n,ch)=>n+ch.trailSpots.length,0);
+    wrapText(ctx, '完成本活動所有章節與關卡，成功收集 '+total+' 件寶物，展現了對長期照護風險與保障觀念的理解與重視。特此嘉許！', W/2, 330, 1000, 36);
+    const badges=['🐚','💎','🌿','⏳','⚓','🪵','🪨','🔥','💧','🌟']; ctx.font='48px serif';
+    let x=W/2 - (badges.length/2)*80 + 40, y=540; badges.forEach(b=>{ ctx.fillText(b,x,y); x+=80; });
+    ctx.font='24px "Noto Sans TC",system-ui'; ctx.fillStyle='#3a2f1f';
+    ctx.fillText('完成日期：'+new Date().toLocaleDateString('zh-TW'), W/2, 680);
+    ctx.fillText('（本證書為活動完成紀念，非正式學術/專業證照）', W/2, 720);
+    ctx.beginPath(); ctx.moveTo(W/2-220, 770); ctx.lineTo(W/2+220, 770); ctx.strokeStyle='#6b4d24'; ctx.lineWidth=2; ctx.stroke();
+    ctx.font='bold 22px "Noto Sans TC",system-ui'; ctx.fillText('活動單位簽名', W/2, 802);
+    const url=c.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='長照險探險_電子證書_'+name+'.png'; document.body.appendChild(a); a.click(); a.remove();
+
+    // 下載完回第一章第一題並自動開題
+    setTimeout(()=>{
+      finishDialog.close();
+      state={completed:{}, chap:0, pointerId:1};
+      renderChaps(); renderBoard();
+      setTimeout(()=> onSpotClick(CHAPTERS[0].trailSpots[0], true, false), 300);
+    }, 300);
+  });
+
+  function wrapText(ctx,text,cx,y,maxWidth,lineHeight){
+    const chars=[...text]; let line='', lines=[];
+    for(const ch of chars){ const test=line+ch; if(ctx.measureText(test).width>maxWidth){ lines.push(line); line=ch; } else line=test; }
+    if(line) lines.push(line);
+    lines.forEach((ln,i)=> ctx.fillText(ln,cx,y+i*lineHeight));
+  }
+
+  // 初始
+  renderChaps(); renderBoard(); moveMascotTo(CHAPTERS[state.chap].trailSpots[0]);
+})();
+</script>
+</body>
+</html>
